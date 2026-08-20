@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>토양 중간층 질산염 감지</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+  <canvas id="scene"></canvas>
+
+  <!-- ===== UI 오버레이 ===== -->
+  <div id="ui">
+
+    <!-- 메인 메뉴 -->
+    <section id="menu" class="menu">
+      <div class="menu-inner">
+        <div class="eyebrow">2026 융합탐구 321체 · 촉촉 EPS</div>
+        <h1 class="title">토양 중간층<br>질산염 감지</h1>
+        <p class="subtitle">Griess 발색법으로 발색된 종이의 농도를 맞추세요.</p>
+
+        <div class="name-row">
+          <input id="nameInput" class="name-input" type="text" maxlength="12"
+                 placeholder="이름을 입력하세요" autocomplete="off" spellcheck="false">
+          <button id="startBtn" class="btn btn-primary" disabled>시작</button>
+        </div>
+        <div id="nameHint" class="name-hint"></div>
+      </div>
+    </section>
+
+    <!-- 안내문 -->
+    <div id="hintBar" class="hint-bar"><span id="hintText"></span></div>
+
+    <!-- 진행 표시(입자 수집 등) -->
+    <div id="progressPill" class="progress-pill"><span id="progressText"></span></div>
+
+    <!-- 건너뛰기 -->
+    <button id="skipBtn" class="skip-btn">
+      작동 과정 건너뛰기
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l7 7-7 7M13 5l7 7-7 7"/></svg>
+    </button>
+
+    <!-- 측정 슬라이더 -->
+    <section id="measure" class="measure">
+      <div class="measure-inner">
+        <div class="measure-title">종이 색에 해당하는 농도를 맞추세요</div>
+        <div class="slider-row">
+          <div id="track" class="track">
+            <div id="trackFill" class="track-fill"></div>
+            <div id="handle" class="handle">
+              <div class="handle-pill">
+                <input id="valInput" class="handle-input" type="text" inputmode="decimal" value="0.00">
+                <span class="handle-unit">mg/L</span>
+              </div>
+              <div class="handle-knob" id="handleKnob"></div>
+            </div>
+          </div>
+          <div id="refRow" class="ref-row"></div>
+          <div class="ref-caption">표준용액 농도 (mg/L)</div>
+        </div>
+        <button id="confirmBtn" class="btn btn-primary measure-btn">확정</button>
+      </div>
+    </section>
+
+    <!-- 결과 카드 -->
+    <section id="result" class="result-card">
+      <div class="result-head">측정 결과</div>
+      <div class="result-grid">
+        <div class="rc-item">
+          <div class="rc-label">내 입력</div>
+          <div class="rc-swatch" id="rcSwatchGuess"></div>
+          <div class="rc-conc" id="rcConcGuess">–</div>
+          <div class="rc-abs" id="rcAbsGuess">–</div>
+        </div>
+        <div class="rc-item">
+          <div class="rc-label">실제 값</div>
+          <div class="rc-swatch" id="rcSwatchTruth"></div>
+          <div class="rc-conc" id="rcConcTruth">–</div>
+          <div class="rc-abs" id="rcAbsTruth">–</div>
+        </div>
+      </div>
+      <div class="result-foot">
+        <div class="rf-block">
+          <div class="rf-label">흡광도 오차</div>
+          <div class="rf-value" id="rcErr">–</div>
+        </div>
+        <div class="rf-divider"></div>
+        <div class="rf-block">
+          <div class="rf-label">정확도</div>
+          <div class="rf-value rf-score" id="rcScore">–</div>
+        </div>
+      </div>
+      <button id="endBtn" class="btn btn-primary result-btn">종료</button>
+    </section>
+
+    <!-- 우측 랭킹 — 메인 메뉴와 결과 화면에서 공용 -->
+    <aside id="sideRank" class="side-rank">
+      <div class="rank-panel">
+        <div class="rank-panel-head">
+          <span class="rank-panel-title">랭킹</span>
+          <span id="sideRankCount" class="rank-panel-count"></span>
+        </div>
+        <div id="rankListSide" class="rank-list"></div>
+      </div>
+    </aside>
+
+    <!-- 관리자 모달 -->
+    <div id="adminModal" class="admin-modal">
+      <div class="admin-box" id="adminBox">
+        <div class="admin-title">랭킹 초기화</div>
+        <div class="admin-desc">비밀번호를 입력하세요.</div>
+        <input id="adminPw" class="admin-input" type="password" autocomplete="off">
+        <div class="admin-actions">
+          <button id="adminCancel" class="btn btn-ghost">취소</button>
+          <button id="adminOk" class="btn btn-primary">초기화</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/ranking.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

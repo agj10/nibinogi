@@ -1,0 +1,12 @@
+# OS
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.DS_Store
+
+# Claude Code 로컬 설정 (launch.json 은 공유한다)
+.claude/settings.local.json
+
+# 임시
+*.log
+tmp/

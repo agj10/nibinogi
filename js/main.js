@@ -120,6 +120,14 @@
 
     UI.init();
     Stages.init(cam);
+
+    // 서버가 살아 있는지 확인하고 랭킹을 받아온다.
+    // 실패하면 이 노트북의 localStorage 로 동작한다.
+    Ranking.init().then(function(){
+      UI.showSideRank(null);
+      if (UI.validateName) UI.validateName();
+      console.log('[ranking] 모드:', Ranking.mode);
+    });
     bindPointer();
 
     requestAnimationFrame(frame);

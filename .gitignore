@@ -10,3 +10,6 @@ desktop.ini
 # 임시
 *.log
 tmp/
+
+# Node
+node_modules/

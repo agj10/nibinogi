@@ -1,0 +1,15 @@
+{
+  "name": "nibinogi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "토양 중간층 질산염 감지 — 융합탐구 321체 부스 게임",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}

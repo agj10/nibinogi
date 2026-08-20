@@ -280,3 +280,22 @@ function shadowed(ctx, blur, oy, color, fn){
   fn();
   ctx.restore();
 }
+
+/* =========================================================
+   서버에서도 같은 채점·검량 코드를 쓴다.
+   브라우저에서는 이 블록이 무시되고 전역 함수로만 남는다.
+   (같은 계산을 두 벌 두면 반드시 어긋난다)
+   ========================================================= */
+if (typeof module !== 'undefined' && module.exports){
+  module.exports = {
+    CALIBRATION: CALIBRATION,
+    CONC_MIN: CONC_MIN,
+    CONC_MAX: CONC_MAX,
+    TARGET_MIN: TARGET_MIN,
+    TARGET_MAX: TARGET_MAX,
+    A_RANGE: A_RANGE,
+    absorbanceAt: absorbanceAt,
+    scoreFor: scoreFor,
+    clamp: clamp
+  };
+}

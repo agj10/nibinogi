@@ -74,35 +74,45 @@ var UI = {
   bindMenu: function(){
     var e = UI.el;
 
+    // 중복 검사는 서버에 물어보므로 비동기다.
+    // 확인이 끝나기 전에는 시작 버튼을 잠가 둔다.
+    var timer = null;
+
+    var setState = function(ok, msg, error){
+      e.startBtn.disabled = !ok;
+      UI.setNameHint(msg || '');
+      e.nameInput.classList.toggle('is-error', !!error);
+      UI._nameOK = ok;
+    };
+
     var validate = function(){
-      var raw = e.nameInput.value;
-      var n = Ranking.normalize(raw);
-      if (!n){
-        e.startBtn.disabled = true;
-        UI.setNameHint('');
-        e.nameInput.classList.remove('is-error');
-        return false;
-      }
-      if (Ranking.exists(n)){
-        e.startBtn.disabled = true;
-        UI.setNameHint('이미 등록된 이름입니다');
-        e.nameInput.classList.add('is-error');
-        return false;
-      }
-      e.startBtn.disabled = false;
-      UI.setNameHint('');
-      e.nameInput.classList.remove('is-error');
-      return true;
+      clearTimeout(timer);
+      var n = Ranking.normalize(e.nameInput.value);
+
+      if (!n){ setState(false, '', false); return; }
+      if (n.length < 1){ setState(false, '', false); return; }
+
+      setState(false, '확인 중…', false);
+      timer = setTimeout(function(){
+        Ranking.checkName(n).then(function(r){
+          // 그 사이 더 입력했으면 이 결과는 버린다
+          if (!Ranking.isLatestCheck(r.seq)) return;
+          if (Ranking.normalize(e.nameInput.value) !== n) return;
+          if (r.taken) setState(false, '이미 등록된 이름입니다', true);
+          else         setState(true, '', false);
+        });
+      }, 280);
     };
 
     UI.validateName = validate;
+    UI._nameOK = false;
 
     e.nameInput.addEventListener('input', validate);
     e.nameInput.addEventListener('keydown', function(ev){
-      if (ev.key === 'Enter' && validate()) UI.startPressed();
+      if (ev.key === 'Enter' && UI._nameOK) UI.startPressed();
     });
     e.startBtn.addEventListener('click', function(){
-      if (validate()) UI.startPressed();
+      if (UI._nameOK) UI.startPressed();
       else {
         e.nameInput.classList.remove('shake');
         void e.nameInput.offsetWidth;
@@ -114,7 +124,7 @@ var UI = {
 
   startPressed: function(){
     var name = Ranking.normalize(UI.el.nameInput.value);
-    if (!name || Ranking.exists(name)) return;
+    if (!name || !UI._nameOK) return;
     if (UI.onStart) UI.onStart(name);
   },
 
@@ -123,9 +133,13 @@ var UI = {
     UI.el.nameHint.classList.toggle('is-on', !!txt);
   },
 
-  renderRank: function(listEl, countEl, highlightTs){
+  renderRank: function(listEl, countEl, highlightId){
     var list = Ranking.sorted();
-    if (countEl) countEl.textContent = list.length ? list.length + '명' : '';
+    if (countEl){
+      var label = list.length ? list.length + '명' : '';
+      if (!Ranking.isOnline()) label = (label ? label + ' · ' : '') + '이 기기에만 저장';
+      countEl.textContent = label;
+    }
 
     if (!list.length){
       listEl.innerHTML = '<div class="rank-empty">아직 기록이 없습니다</div>';
@@ -140,9 +154,9 @@ var UI = {
       } else {
         left = '<div class="rank-num">' + (i + 1) + '</div>';
       }
-      var me = (highlightTs && r.ts === highlightTs) ? ' is-me' : '';
+      var me = (highlightId != null && String(r.id) === String(highlightId)) ? ' is-me' : '';
       var sw = colorForConc(r.conc !== undefined ? r.conc : 0);
-      html += '<div class="rank-row' + me + '" data-ts="' + r.ts + '">'
+      html += '<div class="rank-row' + me + '" data-id="' + r.id + '">'
             +   left
             +   '<div class="rank-name">' + UI.escape(r.name) + '</div>'
             +   '<div class="rank-swatch" style="background:' + sw + '"></div>'
@@ -151,7 +165,7 @@ var UI = {
     }
     listEl.innerHTML = html;
 
-    if (highlightTs){
+    if (highlightId != null){
       var row = listEl.querySelector('.rank-row.is-me');
       if (row){
         setTimeout(function(){
@@ -311,18 +325,27 @@ var UI = {
   },
 
   tryAdmin: function(){
-    if (UI.el.adminPw.value === Ranking.ADMIN_PW){
-      Ranking.clearAll();
-      UI.renderRank(UI.el.rankListSide, UI.el.sideRankCount, null);
-      if (UI.validateName) UI.validateName();
-      UI.closeAdmin();
-    } else {
-      UI.el.adminBox.classList.remove('shake');
-      void UI.el.adminBox.offsetWidth;
-      UI.el.adminBox.classList.add('shake');
-      UI.el.adminPw.value = '';
-      UI.el.adminPw.focus();
-    }
+    var pw = UI.el.adminPw.value;
+    UI.el.adminOk.disabled = true;
+    Ranking.clearAll(pw).then(function(ok){
+      UI.el.adminOk.disabled = false;
+      if (ok){
+        UI.renderRank(UI.el.rankListSide, UI.el.sideRankCount, null);
+        if (UI.validateName) UI.validateName();
+        UI.closeAdmin();
+      } else {
+        UI.el.adminBox.classList.remove('shake');
+        void UI.el.adminBox.offsetWidth;
+        UI.el.adminBox.classList.add('shake');
+        UI.el.adminPw.value = '';
+        UI.el.adminPw.focus();
+      }
+    });
+  },
+
+  /* 온라인/오프라인 표시 갱신 */
+  updateRankMode: function(){
+    UI.renderRank(UI.el.rankListSide, UI.el.sideRankCount, null);
   },
 
   /* =====================================================
@@ -331,9 +354,12 @@ var UI = {
   showMenu: function(){
     // 다음 사람이 바로 이어서 하도록 이름은 비워 둔다
     UI.el.nameInput.value = '';
+    UI._nameOK = false;
+    UI.el.startBtn.disabled = true;
     UI.el.menu.classList.add('is-in');
     UI.showSideRank(null);
-    if (UI.validateName) UI.validateName();
+    // 다른 노트북에서 올라온 기록을 반영한다
+    Ranking.refresh().then(function(){ UI.showSideRank(null); });
   },
   hideMenu: function(){
     UI.el.menu.classList.remove('is-in');
@@ -388,8 +414,8 @@ var UI = {
   },
   hideResult: function(){ UI.el.result.classList.remove('is-in'); },
 
-  showSideRank: function(highlightTs){
-    UI.renderRank(UI.el.rankListSide, UI.el.sideRankCount, highlightTs);
+  showSideRank: function(highlightId){
+    UI.renderRank(UI.el.rankListSide, UI.el.sideRankCount, highlightId);
     UI.el.sideRank.classList.add('is-in');
   },
   hideSideRank: function(){ UI.el.sideRank.classList.remove('is-in'); }

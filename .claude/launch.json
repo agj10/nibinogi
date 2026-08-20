@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "nibinogi",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8731"],
-      "port": 8731
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3000
     }
   ]
 }

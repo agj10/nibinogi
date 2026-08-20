@@ -201,9 +201,19 @@ var Stages = {
         Tweens.add({ from: 0, to: 1.5, dur: 1.0, delay: .3,
                      onUpdate: function(v){ S.reelSpin = v; }, tag: 'reelResume' });
 
+        // 결과 카드는 네트워크를 기다리지 않고 바로 띄운다.
+        // 랭킹 등록은 그동안 뒤에서 진행된다.
         var res = Stages.score(UI.measureValue);
+        Stages._lastId = null;
+
         Tweens.after(.35, function(){ UI.showResult(res); }, 'resIn');
-        Tweens.after(.6,  function(){ UI.showSideRank(res.ts); }, 'rankIn');
+        // 등록이 먼저 끝나면 그 id 로, 아직이면 나중에 다시 그린다.
+        Tweens.after(.6,  function(){ UI.showSideRank(Stages._lastId); }, 'rankIn');
+
+        Ranking.submit(res.entry).then(function(id){
+          Stages._lastId = id;
+          if (Stages.current === 'RESULT') UI.showSideRank(id);
+        });
         break;
 
       /* ---------------------------------------------- */
@@ -233,20 +243,12 @@ var Stages = {
   /* =====================================================
      채점 + 기록
      ===================================================== */
+  /* 화면에 띄울 값을 계산한다. 저장은 Ranking.submit 이 맡는다.
+     서버도 같은 js/util.js 로 다시 계산하므로 값이 어긋나지 않는다. */
   score: function(guess){
     var guessA = absorbanceAt(guess);
     var absErr = Math.abs(guessA - Stages.truthA);
     var sc = scoreFor(absErr);
-
-    var entry = {
-      name:   Stages.playerName,
-      score:  sc,
-      conc:   guess,
-      truth:  Stages.truth,
-      absErr: absErr,
-      ts:     Date.now()
-    };
-    Ranking.add(entry);
 
     return {
       guess:  guess,
@@ -255,7 +257,13 @@ var Stages = {
       truthA: Stages.truthA,
       absErr: absErr,
       score:  sc,
-      ts:     entry.ts
+      entry: {
+        name:   Stages.playerName,
+        score:  sc,
+        conc:   guess,
+        truth:  Stages.truth,
+        absErr: absErr
+      }
     };
   },
 
@@ -545,5 +553,6 @@ var Stages = {
 };
 
 Stages._advancing = false;
+Stages._lastId = null;
 Stages._grabX = 0;
 Stages._grabY = 0;

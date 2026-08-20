@@ -83,5 +83,6 @@ Camera.prototype.worldToScreen = function(wx, wy, w, h){
 Camera.prototype.viewBounds = function(w, h){
   var z = this.zoom;
   var hw = w / 2 / z, hh = h / 2 / z;
-  return { x0: this.x - hw, x1: this.x + hw, y0: this.y - hh, y1: this.y + hh };
+  return { x0: this.x - hw, x1: this.x + hw,
+           y0: this.y - hh, y1: this.y + hh, zoom: z };
 };

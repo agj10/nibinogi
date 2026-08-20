@@ -235,12 +235,12 @@ var UI = {
   /* 실제 실험에서 만든 표준용액 농도를 색 견본으로 늘어놓는다.
      슬라이더 자체에는 색을 두지 않는다. */
   buildRefs: function(){
-    var pts = CALIBRATION.filter(function(p){
-      return p[0] >= CONC_MIN && p[0] <= CONC_MAX;
+    var pts = REF_CONCS.filter(function(c){
+      return c >= CONC_MIN && c <= CONC_MAX;
     });
     var html = '';
     for (var i = 0; i < pts.length; i++){
-      var c = pts[i][0];
+      var c = pts[i];
       var pct = invLerp(CONC_MIN, CONC_MAX, c) * 100;
       html += '<div class="ref" data-c="' + c + '" style="left:' + pct + '%">'
             +   '<span class="ref-swatch" style="background:' + colorForConc(c) + '"></span>'

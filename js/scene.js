@@ -73,7 +73,7 @@ var S = {
   zoneAlpha: 0,
   zonePulse: 0,
 
-  view: { x0: -1e6, x1: 1e6, y0: -1e6, y1: 1e6 },
+  view: { x0: -1e6, x1: 1e6, y0: -1e6, y1: 1e6, zoom: 1 },
   t: 0
 };
 
